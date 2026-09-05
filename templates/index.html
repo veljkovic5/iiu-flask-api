@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+    <meta charset="UTF-8">
+    <title>IoT Devices API Control</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; }
+        h1 { color: #333; }
+        .section { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        input, select { display: block; margin: 8px 0; padding: 8px; width: 250px; }
+        button { padding: 8px 12px; margin-top: 5px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        ul { padding-left: 20px; }
+        li { margin: 8px 0; }
+        .btn-delete { background: #dc3545; margin-left: 10px; }
+        .btn-delete:hover { background: #bd2130; }
+    </style>
+</head>
+<body>
+
+<h1>Upravljanje IoT Uređajima</h1>
+
+<!-- Dodavanje novog uređaja -->
+<div class="section">
+    <h2>Dodaj Novi Uređaj</h2>
+    <input id="devName" placeholder="Naziv uređaja (npr. Senzor 1)">
+    <input id="devType" placeholder="Tip (npr. Temperatura, LED)">
+    <select id="devStatus">
+        <option value="off">off</option>
+        <option value="on">on</option>
+    </select>
+    <button onclick="addDevice()">Dodaj uređaj</button>
+</div>
+
+<!-- Pregled i pretraga uređaja -->
+<div class="section">
+    <h2>Lista Uređaja</h2>
+    <button onclick="loadDevices()">Učitaj sve uređaje</button>
+    <hr>
+    <input id="searchType" placeholder="Pretraži po tipu (npr. LED)">
+    <button onclick="searchDevices()">Pretraži</button>
+
+    <div id="devicesList"></div>
+</div>
+
+<script>
+// GET - Učitavanje svih uređaja
+async function loadDevices() {
+    let res = await fetch("/api/devices");
+    let data = await res.json();
+    renderList(data);
+}
+
+// GET - Pretraga po tipu
+async function searchDevices() {
+    let type = document.getElementById("searchType").value;
+    let res = await fetch("/api/devices/search?type=" + encodeURIComponent(type));
+    let data = await res.json();
+    renderList(data);
+}
+
+// POST - Dodavanje novog uređaja
+async function addDevice() {
+    let name = document.getElementById("devName").value;
+    let type = document.getElementById("devType").value;
+    let status = document.getElementById("devStatus").value;
+
+    await fetch("/api/devices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name, type: type, status: status })
+    });
+
+    loadDevices();
+}
+
+// DELETE - Brisanje uređaja
+async function deleteDevice(id) {
+    await fetch("/api/devices/" + id, { method: "DELETE" });
+    loadDevices();
+}
+
+// Pomocna funkcija za prikaz na ekranu
+function renderList(devices) {
+    let container = document.getElementById("devicesList");
+    container.innerHTML = "";
+
+    let ul = document.createElement("ul");
+    devices.forEach(d => {
+        let li = document.createElement("li");
+        li.innerHTML = `<b>ID ${d.id}:</b> ${d.name} | Tip: ${d.type} | Status: <i>${d.status}</i>`;
+        
+        let btn = document.createElement("button");
+        btn.innerText = "Obriši";
+        btn.className = "btn-delete";
+        btn.onclick = () => deleteDevice(d.id);
+
+        li.appendChild(btn);
+        ul.appendChild(li);
+    });
+    container.appendChild(ul);
+}
+</script>
+
+</body>
+</html>

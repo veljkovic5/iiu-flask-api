@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify
 import sqlite3
+from flask import Flask, request, jsonify, render_template
 
 app = Flask(__name__)
 
@@ -24,6 +24,11 @@ def get_db_connection():
     conn = sqlite3.connect('database.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+# Početna stranica - učitava HTML interfejs
+@app.route("/")
+def home():
+    return render_template("index.html")
 
 # 1. GET - Prikaz svih uređaja
 @app.route('/api/devices', methods=['GET'])
